@@ -1,0 +1,300 @@
+import React, { useState } from 'react';
+import { ShoppingCart, Package, User, Mail, Hash, DollarSign } from 'lucide-react';
+
+const OrderForm = () => {
+  const [formData, setFormData] = useState({
+    customerName: '',
+    customerId: '',
+    quantity: '',
+    product: '',
+    productCost: '',
+    userEmail: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  const products = [
+    { id: 'laptop', name: 'Laptop - Dell XPS 13', price: 999.99 },
+    { id: 'phone', name: 'iPhone 15 Pro', price: 1199.99 },
+    { id: 'tablet', name: 'iPad Air', price: 599.99 },
+    { id: 'headphones', name: 'Sony WH-1000XM5', price: 349.99 },
+    { id: 'monitor', name: '27" 4K Monitor', price: 449.99 },
+    { id: 'keyboard', name: 'Mechanical Keyboard', price: 129.99 },
+    { id: 'mouse', name: 'Wireless Gaming Mouse', price: 79.99 },
+    { id: 'webcam', name: '4K Webcam', price: 199.99 }
+  ];
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    if (name === 'product') {
+      const selectedProduct = products.find(p => p.id === value);
+      if (selectedProduct) {
+        setFormData(prev => ({
+          ...prev,
+          productCost: selectedProduct.price.toString()
+        }));
+      }
+    }
+  };
+
+  const calculateTotal = () => {
+    const qty = parseFloat(formData.quantity) || 0;
+    const cost = parseFloat(formData.productCost) || 0;
+    return (qty * cost).toFixed(2);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const orderData = {
+        ...formData,
+        totalCost: calculateTotal(),
+        status: 'Order Placed',
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Order Data:', orderData);
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      setSubmitStatus('success');
+      setFormData({
+        customerName: '',
+        customerId: '',
+        quantity: '',
+        product: '',
+        productCost: '',
+        userEmail: ''
+      });
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="text-center mb-6 sm:mb-8 lg:mb-10">
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="bg-blue-600 p-2 sm:p-3 lg:p-4 rounded-full">
+              <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-1 sm:mb-2 px-2">
+            Order Management System
+          </h1>
+          <p className="text-gray-600 text-sm sm:text-base lg:text-lg xl:text-xl px-4">
+            Place your order and track its progress
+          </p>
+        </div>
+
+        <div className="max-w-xs sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl mx-auto">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl p-4 sm:p-6 lg:p-8 xl:p-10 border border-gray-100">
+            <div className="flex items-center mb-4 sm:mb-6 lg:mb-8">
+              <Package className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-blue-600 mr-2 sm:mr-3" />
+              <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-900">New Order</h2>
+            </div>
+
+            {/* ✅ Fixed form nesting issue here */}
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4 sm:space-y-5 lg:space-y-6">
+                {/* Customer Name */}
+                <div>
+                  <label className="flex items-center text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1 sm:mb-2">
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 mr-1 sm:mr-2" />
+                    Customer Name
+                  </label>
+                  <input
+                    type="text"
+                    name="customerName"
+                    value={formData.customerName}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter customer name"
+                  />
+                </div>
+
+                {/* Customer ID */}
+                <div>
+                  <label className="flex items-center text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1 sm:mb-2">
+                    <Hash className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 mr-1 sm:mr-2" />
+                    Customer ID
+                  </label>
+                  <input
+                    type="text"
+                    name="customerId"
+                    value={formData.customerId}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter customer ID"
+                  />
+                </div>
+
+                {/* Product Selection */}
+                <div>
+                  <label className="flex items-center text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1 sm:mb-2">
+                    <Package className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 mr-1 sm:mr-2" />
+                    Product
+                  </label>
+                  <select
+                    name="product"
+                    value={formData.product}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="">Select a product</option>
+                    {products.map(product => (
+                      <option key={product.id} value={product.id}>
+                        {product.name} - ${product.price}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Quantity and Cost */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                  <div>
+                    <label className="flex items-center text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1 sm:mb-2">
+                      <Hash className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 mr-1 sm:mr-2" />
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleInputChange}
+                      required
+                      min="1"
+                      className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Enter quantity"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex items-center text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1 sm:mb-2">
+                      <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Product Cost (Unit)</span>
+                      <span className="sm:hidden">Unit Cost</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="productCost"
+                      value={formData.productCost}
+                      onChange={handleInputChange}
+                      required
+                      step="0.01"
+                      min="0"
+                      className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Product cost"
+                    />
+                  </div>
+                </div>
+
+                {/* Total Cost */}
+                {formData.quantity && formData.productCost && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-md sm:rounded-lg p-3 sm:p-4 lg:p-5">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+                      <span className="text-blue-800 font-medium text-sm sm:text-base lg:text-lg">Total Cost:</span>
+                      <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">${calculateTotal()}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Email */}
+                <div>
+                  <label className="flex items-center text-xs sm:text-sm lg:text-base font-medium text-gray-700 mb-1 sm:mb-2">
+                    <Mail className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 mr-1 sm:mr-2" />
+                    User Email
+                  </label>
+                  <input
+                    type="email"
+                    name="userEmail"
+                    value={formData.userEmail}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter email address"
+                  />
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 sm:py-4 lg:py-5 px-4 sm:px-6 lg:px-8 rounded-md sm:rounded-lg font-semibold text-sm sm:text-base lg:text-lg xl:text-xl hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 border-b-2 border-white mr-2 sm:mr-3"></div>
+                      <span className="hidden sm:inline">Processing Order...</span>
+                      <span className="sm:hidden">Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2" />
+                      Place Order
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* Status Messages */}
+            {submitStatus === 'success' && (
+              <div className="mt-4 sm:mt-6 bg-green-50 border border-green-200 rounded-md sm:rounded-lg p-3 sm:p-4">
+                <div className="flex items-start sm:items-center">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-green-800 font-medium text-sm sm:text-base lg:text-lg">Order Placed Successfully!</h3>
+                    <p className="text-green-700 text-xs sm:text-sm lg:text-base mt-1">Your order has been submitted and an email has been sent to the warehouse.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {submitStatus === 'error' && (
+              <div className="mt-4 sm:mt-6 bg-red-50 border border-red-200 rounded-md sm:rounded-lg p-3 sm:p-4">
+                <div className="flex items-start sm:items-center">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-red-500 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0 mt-0.5 sm:mt-0">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-red-800 font-medium text-sm sm:text-base lg:text-lg">Order Submission Failed</h3>
+                    <p className="text-red-700 text-xs sm:text-sm lg:text-base mt-1">There was an error processing your order. Please try again.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center mt-6 sm:mt-8 lg:mt-10 text-gray-500 text-xs sm:text-sm lg:text-base">
+        <p>Order Management System v1.0</p>
+      </div>
+    </div>
+  );
+};
+
+export default OrderForm;
