@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ShoppingCart, Package, User, Mail, Hash, DollarSign } from 'lucide-react';
+import axios from 'axios'
+import { BASE_URL } from '../constant';
 
 const OrderForm = () => {
   const [formData, setFormData] = useState({
@@ -13,17 +15,29 @@ const OrderForm = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [products, setProducts] = useState(null);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(null);
 
-  const products = [
-    { id: 'laptop', name: 'Laptop - Dell XPS 13', price: 999.99 },
-    { id: 'phone', name: 'iPhone 15 Pro', price: 1199.99 },
-    { id: 'tablet', name: 'iPad Air', price: 599.99 },
-    { id: 'headphones', name: 'Sony WH-1000XM5', price: 349.99 },
-    { id: 'monitor', name: '27" 4K Monitor', price: 449.99 },
-    { id: 'keyboard', name: 'Mechanical Keyboard', price: 129.99 },
-    { id: 'mouse', name: 'Wireless Gaming Mouse', price: 79.99 },
-    { id: 'webcam', name: '4K Webcam', price: 199.99 }
-  ];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setProductsLoading(true);
+        setProductsError(null);
+        const response = await axios.get(BASE_URL + '/api/products/');
+        console.log('Products fetched:', response.data);
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Could not fetch the products', error);
+        setProductsError('Failed to load products. Please try again.');
+        setProducts([]); // Set empty array to prevent map errors
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,12 +46,14 @@ const OrderForm = () => {
       [name]: value
     }));
 
-    if (name === 'product') {
-      const selectedProduct = products.find(p => p.id === value);
+    if (name === 'product' && products && products.length > 0) {
+      // Convert value to number if it's a numeric string, otherwise keep as string
+      const productId = isNaN(value) ? value : Number(value);
+      const selectedProduct = products.find(p => p.id === productId);
       if (selectedProduct) {
         setFormData(prev => ({
           ...prev,
-          productCost: selectedProduct.price.toString()
+          productCost: selectedProduct.cost.toString()
         }));
       }
     }
@@ -83,6 +99,26 @@ const OrderForm = () => {
     }
   };
 
+  const retryFetchProducts = () => {
+    const fetchProducts = async () => {
+      try {
+        setProductsLoading(true);
+        setProductsError(null);
+        const response = await axios.get(BASE_URL + '/api/products/');
+        console.log('Products fetched:', response.data);
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Could not fetch the products', error);
+        setProductsError('Failed to load products. Please try again.');
+        setProducts([]);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
@@ -107,7 +143,6 @@ const OrderForm = () => {
               <h2 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-900">New Order</h2>
             </div>
 
-            {/* ✅ Fixed form nesting issue here */}
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 sm:space-y-5 lg:space-y-6">
                 {/* Customer Name */}
@@ -155,15 +190,48 @@ const OrderForm = () => {
                     value={formData.product}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    disabled={productsLoading || productsError}
+                    className="w-full px-3 sm:px-4 lg:px-5 py-2 sm:py-3 lg:py-4 text-sm sm:text-base lg:text-lg border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
-                    <option value="">Select a product</option>
-                    {products.map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} - ${product.price}
-                      </option>
-                    ))}
+                    {productsLoading ? (
+                      <option value="">Loading products...</option>
+                    ) : productsError ? (
+                      <option value="">Failed to load products</option>
+                    ) : products && products.length > 0 ? (
+                      <>
+                        <option value="">Select a product</option>
+                        {products.map(product => (
+                          <option key={product.id} value={product.id}>
+                            {product.name} - ${product.cost}
+                          </option>
+                        ))}
+                      </>
+                    ) : (
+                      <option value="">No products available</option>
+                    )}
                   </select>
+                  
+                  {/* Error message and retry button */}
+                  {productsError && (
+                    <div className="mt-2 flex items-center justify-between bg-red-50 border border-red-200 rounded-md p-2">
+                      <span className="text-red-700 text-xs sm:text-sm">{productsError}</span>
+                      <button
+                        type="button"
+                        onClick={retryFetchProducts}
+                        className="text-red-600 hover:text-red-800 text-xs sm:text-sm font-medium underline"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Loading indicator */}
+                  {productsLoading && (
+                    <div className="mt-2 flex items-center text-gray-500 text-xs sm:text-sm">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
+                      Loading products...
+                    </div>
+                  )}
                 </div>
 
                 {/* Quantity and Cost */}
@@ -235,7 +303,7 @@ const OrderForm = () => {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || productsLoading || productsError}
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 sm:py-4 lg:py-5 px-4 sm:px-6 lg:px-8 rounded-md sm:rounded-lg font-semibold text-sm sm:text-base lg:text-lg xl:text-xl hover:from-blue-700 hover:to-purple-700 focus:ring-4 focus:ring-blue-200 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
                 >
                   {isSubmitting ? (
