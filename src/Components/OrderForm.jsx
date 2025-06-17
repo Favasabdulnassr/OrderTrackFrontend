@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ShoppingCart, Package, User, Mail, Hash, DollarSign } from 'lucide-react';
 import axios from 'axios'
 import { BASE_URL } from '../constant';
+import { toast } from 'react-toastify';
 
 const OrderForm = () => {
   const [formData, setFormData] = useState({
@@ -71,18 +72,31 @@ const OrderForm = () => {
     setSubmitStatus(null);
 
     try {
+      // Prepare the order data according to your Django model
       const orderData = {
-        ...formData,
-        totalCost: calculateTotal(),
-        status: 'Order Placed',
-        timestamp: new Date().toISOString()
+        customer_name: formData.customerName,
+        customer_id: formData.customerId,
+        product: parseInt(formData.product), // Ensure it's an integer for the foreign key
+        quantity: parseInt(formData.quantity),
+        product_cost: parseFloat(formData.productCost),
+        user_email: formData.userEmail,
+        status: 'Order Placed' // Default status as per your model
       };
 
-      console.log('Order Data:', orderData);
+      console.log('Submitting order data:', orderData);
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Make the actual API call to your Django backend
+      const response = await axios.post(BASE_URL + '/api/orders/', orderData, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
+      console.log('Order submitted successfully:', response.data);
+      toast.success('Order Submitted Successfully')
       setSubmitStatus('success');
+      
+      // Reset form after successful submission
       setFormData({
         customerName: '',
         customerId: '',
@@ -91,9 +105,25 @@ const OrderForm = () => {
         productCost: '',
         userEmail: ''
       });
+
     } catch (error) {
       console.error('Error submitting order:', error);
-      setSubmitStatus('error');
+      toast.error('Error Submitting Order')
+      
+      // Handle different types of errors
+      if (error.response) {
+        // Server responded with error status
+        console.error('Error response:', error.response.data);
+        setSubmitStatus('error');
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error('No response received:', error.request);
+        setSubmitStatus('error');
+      } else {
+        // Something else happened
+        console.error('Error:', error.message);
+        setSubmitStatus('error');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -333,7 +363,7 @@ const OrderForm = () => {
                   </div>
                   <div>
                     <h3 className="text-green-800 font-medium text-sm sm:text-base lg:text-lg">Order Placed Successfully!</h3>
-                    <p className="text-green-700 text-xs sm:text-sm lg:text-base mt-1">Your order has been submitted and an email has been sent to the warehouse.</p>
+                    <p className="text-green-700 text-xs sm:text-sm lg:text-base mt-1">Your order has been submitted and saved to the database.</p>
                   </div>
                 </div>
               </div>
